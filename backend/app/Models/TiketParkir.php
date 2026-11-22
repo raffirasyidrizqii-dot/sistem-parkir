@@ -1,21 +1,44 @@
 <?php
 
-namespace App\Models;
+namespace App\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use App\Models\TiketParkir;
+use Carbon\Carbon;
 
-class TiketParkir extends Model
+class TiketController extends Controller
 {
- 
-protected $table="tiket_parkir";
+    public function kendaraanAktif()
+    {
+        try {
+            $data = TiketParkir::where('status', 'masuk')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    $kat = strtolower($item->kategori ?: 'motor');
+                    $tipe = str_starts_with($item->kode_tiket, 'MBR-') ? 'Member' : 'Non-Member';
 
+                    return [
+                        'id'          => $item->id,
+                        'kode_tiket'  => $item->kode_tiket,
+                        'tipe'        => $tipe,
+                        'kategori'    => $kat,
+                        'no_plat'     => $item->plat_nomor ?: '-',
+                        'plat_nomor'  => $item->plat_nomor ?: '-',
+                        'waktu_masuk' => $item->waktu_masuk ?: $item->created_at,
+                        'status'      => $item->status,
+                    ];
+                });
 
-protected $fillable=[
-'kode_tiket',
-'qr_code',
-'kategori',
-'status',
-'waktu_masuk',
-'waktu_keluar'
-];
+            return response()->json([
+                'status' => true,
+                'data'   => $data
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

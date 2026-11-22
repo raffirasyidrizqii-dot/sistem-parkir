@@ -12,67 +12,74 @@ class TransaksiController extends Controller
     public function index()
     {
         try {
-            $transaksis = Transaksi::orderBy('created_at', 'desc')->get();
+            $data = Transaksi::orderBy('id', 'desc')->get();
             return response()->json([
-                'status'  => true,
-                'message' => 'Berhasil mengambil data transaksi',
-                'data'    => $transaksis
+                'status' => true,
+                'data'   => $data
             ], 200);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Gagal mengambil data: ' . $e->getMessage()
+                'message' => 'Gagal mengambil transaksi: ' . $e->getMessage()
             ], 500);
         }
     }
 
     public function store(Request $request)
     {
-        // Validasi disesuaikan dengan payload dari Nuxt (tiket_id & bayar)
-        $request->validate([
-            'tiket_id'    => 'required',
-            'bayar'       => 'required|numeric|min:0',
-            'total_bayar' => 'required|numeric|min:0',
-        ]);
+        try {
+            $totalBayar = (float) ($request->total_bayar ?? 0);
+            $uangBayar  = (float) ($request->bayar ?? 0);
+            $tipe       = $request->tipe ?? 'non-member';
 
-        $uangBayar = $request->bayar;
-        $tarif = $request->total_bayar;
+            $tiket = null;
+            if ($request->filled('tiket_id')) {
+                $tiket = TiketParkir::find($request->tiket_id);
+            }
 
-        if ($uangBayar < $tarif) {
+            if (!$tiket && $request->filled('kode')) {
+                $rawKode = trim($request->kode);
+                $tiket = TiketParkir::where('kode_tiket', $rawKode)
+                    ->orWhere('kode_tiket', 'LIKE', '%' . $rawKode . '%')
+                    ->where('status', 'masuk')
+                    ->latest('id')
+                    ->first();
+            }
+
+            $kodeFinal = $tiket ? $tiket->kode_tiket : ($request->kode ?: ('TRX-' . time()));
+
+            if ($tiket) {
+                $tiket->status = 'keluar';
+                $tiket->waktu_keluar = Carbon::now();
+                $tiket->save();
+            }
+
+            $kembalian = max(0, $uangBayar - $totalBayar);
+            $kategori  = strtolower($request->kategori ?: ($tiket->kategori ?? 'motor'));
+            $nopol     = $request->nopol ?: ($tiket->plat_nomor ?? '-');
+
+            $transaksi = Transaksi::create([
+                'kode_tiket'    => (string) $kodeFinal,
+                'kategori'      => $kategori ?: 'motor',
+                'no_plat'       => (string) ($nopol ?: '-'),
+                'total_bayar'   => $totalBayar,
+                'uang_bayar'    => $uangBayar,
+                'kembalian'     => $kembalian,
+                'status'        => 'lunas',
+                'tanggal_bayar' => Carbon::now()
+            ]);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Pembayaran berhasil, palang keluar dibuka!',
+                'data'    => $transaksi
+            ], 200);
+
+        } catch (\Throwable $e) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Uang bayar kurang!'
-            ], 400);
+                'message' => 'Gagal transaksi keluar: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Ambil data tiket berdasarkan tiket_id
-        $tiket = TiketParkir::find($request->tiket_id);
-        $kodeTiket = $tiket ? $tiket->kode_tiket : ('TIKET-' . $request->tiket_id);
-
-        // Update status tiket jika ada
-        if ($tiket) {
-            $tiket->status = 'keluar';
-            $tiket->save();
-        }
-
-        $kembalian = $uangBayar - $tarif;
-
-        //  Simpan transaksi keuangan
-        $transaksi = Transaksi::create([
-            'kode_tiket'    => $kodeTiket,
-            'kategori'      => $request->kategori ?? 'motor',
-            'no_plat'       => $request->nopol ?? '-',
-            'total_bayar'   => $tarif,
-            'uang_bayar'    => $uangBayar,
-            'kembalian'     => $kembalian,
-            'status'        => 'lunas',
-            'tanggal_bayar' => Carbon::now()
-        ]);
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'Pembayaran berhasil, gate terbuka!',
-            'data'    => $transaksi
-        ], 200);
     }
 }

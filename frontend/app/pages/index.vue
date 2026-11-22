@@ -82,9 +82,17 @@ const handleLogin = async () => {
         </div>
 
         <div>
-          <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2 ml-1">
-            Password
-          </label>
+          <div class="flex items-center justify-between mb-2 ml-1">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+              Password
+            </label>
+            <NuxtLink
+              to="/forgot-password"
+              class="text-xs font-black text-slate-500 hover:text-slate-900 hover:underline transition"
+            >
+              Lupa Password?
+            </NuxtLink>
+          </div>
           <div class="relative">
             <input
               v-model="form.password"
@@ -96,7 +104,7 @@ const handleLogin = async () => {
             <button
               type="button"
               @click="showPassword = !showPassword"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 focus:outline-none"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 focus:outline-none cursor-pointer"
             >
               <EyeIcon v-if="showPassword" class="w-5 h-5" />
               <EyeSlashIcon v-else class="w-5 h-5" />

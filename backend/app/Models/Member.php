@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Member extends Model
 {
@@ -32,4 +33,16 @@ class Member extends Model
         'tanggal_bayar'   => 'datetime',
         'tanggal_reset'   => 'date',
     ];
+
+    /**
+     * Hitung status secara dinamis berdasarkan tanggal expired saat ini
+     */
+    public function getStatusAttribute($value)
+    {
+        if ($this->tanggal_expired) {
+            $isPast = Carbon::parse($this->tanggal_expired)->endOfDay()->isPast();
+            return $isPast ? 'belum lunas' : 'lunas';
+        }
+        return $value ?? 'belum lunas';
+    }
 }

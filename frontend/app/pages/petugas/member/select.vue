@@ -28,17 +28,6 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/petugas/user"
-            class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/40 text-xs font-semibold transition group"
-          >
-            <div class="flex items-center gap-3">
-              <span class="text-sm">🟢</span>
-              <span>Gate Masuk</span>
-            </div>
-            <span class="text-xs text-slate-600">›</span>
-          </NuxtLink>
-
-          <NuxtLink
             to="/petugas/keluar"
             class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/40 text-xs font-semibold transition group"
           >
@@ -73,7 +62,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/petugas/laporan/member"
+            to="/petugas/laporan"
             class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/40 text-xs font-semibold transition group"
           >
             <div class="flex items-center gap-3">
@@ -122,7 +111,7 @@
 
     <!-- KONTEN UTAMA -->
     <main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-      <!-- HEADER DASHBOARD OVERVIEW STYLE -->
+      <!-- HEADER -->
       <header class="bg-white px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 shrink-0">
         <div>
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PLAZA ANDALAS SYSTEM</span>
@@ -149,7 +138,7 @@
 
       <!-- BODY WRAPPER -->
       <div class="p-8 space-y-6">
-        <!-- RINGKASAN METRIC MEMBER (KARTU KECIL ALA REFERENSI) -->
+        <!-- RINGKASAN METRIC REALTIME -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -183,11 +172,11 @@
                 !
               </div>
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expired / Belum Lunas</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expired / Tagihan Baru</p>
                 <h3 class="text-lg font-black text-rose-600">{{ countExpired }} Org</h3>
               </div>
             </div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-mono">Pending</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-mono">Tagihan</span>
           </div>
         </div>
 
@@ -196,7 +185,7 @@
           <div class="p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h3 class="text-sm font-extrabold text-slate-900">Daftar Langganan Member</h3>
-              <p class="text-[11px] text-slate-400 mt-0.5">Seluruh pemegang kartu parkir resmi Plaza Andalas</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Status hak akses dihitung otomatis berdasarkan tanggal hari ini vs tanggal expired</p>
             </div>
             <span class="text-[11px] text-slate-500 font-bold">Menampilkan {{ members.length }} Data</span>
           </div>
@@ -210,7 +199,7 @@
                   <th class="py-3.5 px-5">Instansi/Perusahaan</th>
                   <th class="py-3.5 px-5">Tagihan</th>
                   <th class="py-3.5 px-5">Dibayar</th>
-                  <th class="py-3.5 px-5">Status</th>
+                  <th class="py-3.5 px-5">Status Hak Akses</th>
                   <th class="py-3.5 px-5">Masa Berlaku</th>
                   <th class="py-3.5 px-5 text-center">Aksi</th>
                 </tr>
@@ -230,34 +219,37 @@
                   <td class="py-4 px-5 text-slate-500 font-medium">
                     {{ item.nama_perusahaan }}
                   </td>
-                  <td class="py-4 px-5 font-bold text-slate-900">
-                    Rp {{ formatRupiah(item.total_harga) }}
+                  <td class="py-4 px-5 font-bold text-slate-900 font-mono">
+                    Rp {{ formatRupiah(item.total_harga || 150000) }}
                   </td>
-                  <td class="py-4 px-5 font-bold text-slate-700">
-                    Rp {{ formatRupiah(item.jumlah_bayar) }}
+                  <td class="py-4 px-5 font-bold text-slate-700 font-mono">
+                    Rp {{ formatRupiah(item.jumlah_bayar || item.total_harga || 150000) }}
                   </td>
+
+                  <!-- STATUS DINAMIS REALTIME (CEK TANGGAL SEKARANG) -->
                   <td class="py-4 px-5">
                     <span
                       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold"
                       :class="
-                        item.status === 'lunas'
+                        cekStatusAktif(item)
                           ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
                           : 'bg-rose-50 text-rose-600 border border-rose-200/60'
                       "
                     >
                       <span
                         class="w-1.5 h-1.5 rounded-full"
-                        :class="item.status === 'lunas' ? 'bg-emerald-500' : 'bg-rose-500'"
+                        :class="cekStatusAktif(item) ? 'bg-emerald-500' : 'bg-rose-500'"
                       ></span>
-                      {{ item.status === 'lunas' ? 'Lunas' : 'Belum Lunas' }}
+                      {{ cekStatusAktif(item) ? 'Lunas' : 'Belum Lunas' }}
                     </span>
                   </td>
-                  <td class="py-4 px-5 font-medium text-slate-500">
+
+                  <td class="py-4 px-5 font-medium text-slate-500 font-mono">
                     {{ formatTanggal(item.tanggal_expired) }}
                   </td>
+
                   <td class="py-4 px-5">
                     <div class="flex items-center justify-center gap-2">
-                      <!-- Detail Eye -->
                       <button
                         type="button"
                         @click.stop="lihatDetail(item.id)"
@@ -267,20 +259,17 @@
                         <EyeIcon class="w-4 h-4" />
                       </button>
 
-                      <!-- Edit Pembayaran -->
                       <button
-                        v-if="item.status !== 'lunas'"
                         type="button"
                         @click.stop="edit(item.id)"
                         class="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white transition cursor-pointer"
-                        title="Update Pembayaran"
+                        title="Edit Data Member"
                       >
                         <PencilIcon class="w-4 h-4" />
                       </button>
 
-                      <!-- Hapus -->
                       <button
-                        v-if="item.status !== 'lunas'"
+                        v-if="!cekStatusAktif(item)"
                         type="button"
                         @click.stop="hapus(item.id)"
                         class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition cursor-pointer"
@@ -288,15 +277,10 @@
                       >
                         <TrashIcon class="w-4 h-4" />
                       </button>
-
-                      <span v-if="item.status === 'lunas'" class="text-[11px] font-bold text-slate-400 px-1">
-                        -
-                      </span>
                     </div>
                   </td>
                 </tr>
 
-                <!-- Kosong -->
                 <tr v-if="members.length === 0">
                   <td colspan="8" class="py-14 text-center text-slate-400 text-xs font-semibold">
                     Belum ada data member terdaftar dalam sistem.
@@ -320,7 +304,6 @@
           <h2 class="text-lg font-black text-slate-900 tracking-tight">Kartu Member Parkir</h2>
         </div>
 
-        <!-- Frame QR Code -->
         <div class="flex justify-center mb-5">
           <div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center shadow-xs">
             <img v-if="qr" :src="qr" class="w-44 h-44 object-contain" alt="QR Code Member" />
@@ -330,7 +313,6 @@
           </div>
         </div>
 
-        <!-- Detail Data -->
         <div class="space-y-2 bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs">
           <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
             <span class="text-slate-400 font-bold">Kode Member</span>
@@ -346,24 +328,23 @@
           </div>
           <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
             <span class="text-slate-400 font-bold">Tagihan</span>
-            <span class="font-black text-slate-900">Rp {{ formatRupiah(detailMember.total_harga) }}</span>
+            <span class="font-black text-slate-900 font-mono">Rp {{ formatRupiah(detailMember.total_harga || 150000) }}</span>
           </div>
           <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
             <span class="text-slate-400 font-bold">Status</span>
             <span
-              :class="detailMember.status === 'lunas' ? 'text-emerald-600' : 'text-rose-600'"
+              :class="cekStatusAktif(detailMember) ? 'text-emerald-600' : 'text-rose-600'"
               class="font-black uppercase"
             >
-              {{ detailMember.status }}
+              {{ cekStatusAktif(detailMember) ? 'LUNAS (AKTIF)' : 'BELUM LUNAS (TAGIHAN BARU)' }}
             </span>
           </div>
           <div class="flex justify-between items-center py-1">
             <span class="text-slate-400 font-bold">Berlaku Sampai</span>
-            <span class="font-medium text-slate-700">{{ formatTanggal(detailMember.tanggal_expired) }}</span>
+            <span class="font-medium text-slate-700 font-mono">{{ formatTanggal(detailMember.tanggal_expired) }}</span>
           </div>
         </div>
 
-        <!-- Tombol Modal -->
         <div class="space-y-2 mt-5">
           <button
             @click="downloadMember"
@@ -400,21 +381,27 @@ const detailMember = ref<any>({})
 const qr = ref('')
 const totalSedangParkir = ref(0)
 
+// FUNGSI INTI: Validasi status aktif secara realtime dari tanggal expired
+const cekStatusAktif = (item: any): boolean => {
+  if (!item || !item.tanggal_expired) return false
+  const expDate = new Date(item.tanggal_expired)
+  expDate.setHours(23, 59, 59, 999) // Masa aktif sampai detik terakhir hari tersebut
+  return new Date() <= expDate
+}
+
 const countLunas = computed(() => {
-  return members.value.filter((m) => m.status === 'lunas').length
+  return members.value.filter((m) => cekStatusAktif(m)).length
 })
 
 const countExpired = computed(() => {
-  return members.value.filter((m) => m.status !== 'lunas').length
+  return members.value.filter((m) => !cekStatusAktif(m)).length
 })
 
-// Load Data
 const load = async () => {
   try {
     const res = await $api.get('/member')
-    members.value = res.data.data
+    members.value = res.data.data || []
 
-    // Sinkronkan badge sedang parkir
     const resAktif = await $api.get('/parkir/aktif')
     if (resAktif.data?.data) {
       totalSedangParkir.value = resAktif.data.data.length
@@ -475,15 +462,12 @@ const downloadMember = () => {
   canvas.width = 500
   canvas.height = 700
 
-  // White Card Background
   ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(0, 0, 500, 700)
 
-  // Top Accent Banner
   ctx.fillStyle = '#0B0F19'
   ctx.fillRect(0, 0, 500, 110)
 
-  // Header Titles
   ctx.fillStyle = '#FFFFFF'
   ctx.font = 'bold 24px Arial'
   ctx.textAlign = 'center'
@@ -493,7 +477,6 @@ const downloadMember = () => {
   ctx.font = 'bold 13px Arial'
   ctx.fillText('PLAZA ANDALAS PARKING SYSTEM', 250, 80)
 
-  // Data List
   ctx.textAlign = 'left'
   ctx.font = '16px Arial'
   ctx.fillStyle = '#64748B'
@@ -507,9 +490,8 @@ const downloadMember = () => {
   ctx.fillText(`:  ${detailMember.value.kode_member}`, 180, 170)
   ctx.fillText(`:  ${detailMember.value.nama_member}`, 180, 210)
   ctx.fillText(`:  ${detailMember.value.nama_perusahaan}`, 180, 250)
-  ctx.fillText(`:  ${detailMember.value.status.toUpperCase()}`, 180, 290)
+  ctx.fillText(`:  ${cekStatusAktif(detailMember.value) ? 'LUNAS' : 'BELUM LUNAS'}`, 180, 290)
 
-  // QR Frame
   ctx.fillStyle = '#F8FAFC'
   ctx.fillRect(140, 350, 220, 220)
 

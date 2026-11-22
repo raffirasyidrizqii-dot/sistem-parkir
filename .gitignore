@@ -1,0 +1,36 @@
+# System & Secrets
+.env
+.env.*
+!.env.example
+*.log
+Thumbs.db
+.DS_Store
+
+# Node / Nuxt
+node_modules/
+.nuxt/
+.output/
+.nitro/
+
+# PHP / Composer
+vendor/
+
+# Rust / Cargo
+target/
+**/*.rs.bk
+
+# Flutter / Android
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+android/.gradle/
+android/app/build/
+*.apk
+*.aab
+
+# Binaries
+*.exe
+*.dll
+*.so

@@ -11,9 +11,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemberGateController;
+use App\Http\Controllers\ForgotPasswordController; // <-- 1. IMPORT CONTROLLER INI
 
 // ===================================
-// PUBLIC ROUTES
+// PUBLIC ROUTES (BEBAS AKSES TANPA TOKEN)
 // ===================================
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/member/check', [MemberController::class, 'check']);
@@ -21,9 +22,14 @@ Route::post('/tiket', [TiketController::class, 'create']);
 Route::get('/tiket/{kode}', [TiketController::class, 'showByKode']);
 Route::get('/qrcode/{kode}', [TiketController::class, 'qrcode']);
 
+// Route Lupa Password Petugas (Fonnte OTP) - WAJIB DI PUBLIC
+Route::post('/forgot-password/check-email', [ForgotPasswordController::class, 'checkEmail']);
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
+Route::post('/forgot-password/verify-reset', [ForgotPasswordController::class, 'verifyAndReset']);
+
 
 // ===================================
-// PROTECTED ROUTES
+// PROTECTED ROUTES (WAJIB LOGIN / TOKEN SANCTUM)
 // ===================================
 Route::middleware(['auth:sanctum'])->group(function () {
     
@@ -39,9 +45,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/member/{id}/pembayaran', [MemberController::class, 'updatePembayaran']);
     Route::apiResource('/member', MemberController::class);
 
-    // Route Admin 
+    // Route Admin Petugas
     Route::get('/admin/petugas', [UserController::class, 'index']);
     Route::post('/admin/petugas', [UserController::class, 'store']);
+    Route::put('/admin/petugas/{id}', [UserController::class, 'update']);
     Route::put('/admin/petugas/{id}/reset-password', [UserController::class, 'updatePassword']);
     Route::delete('/admin/petugas/{id}', [UserController::class, 'destroy']);
 
