@@ -1,3 +1,7 @@
+> [!NOTE]
+> **Pemberitahuan Hak Cipta (All Rights Reserved)**
+> Repositori ini dipublikasikan sementara secara terbatas hanya untuk keperluan evaluasi dan penilaian akademis. Dilarang keras menyalin, mengadaptasi, atau menyebarluaskan kode sumber tanpa izin tertulis dari pemilik hak cipta.
+
 # Sistem Manajemen Parkir Digital
 
 Aplikasi sistem pengelolaan perparkiran kendaraan, kasir pos keluar, manajemen tiket barcode, dan pendataan member parkir berbasis web. Menggunakan arsitektur monorepo dengan **Laravel 11** sebagai REST API backend dan **Nuxt 3** sebagai antarmuka frontend.
